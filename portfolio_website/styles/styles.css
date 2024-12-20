@@ -311,9 +311,9 @@ footer {
     gap: 2rem;
     justify-content: center;
     margin-top: 2rem;
-    background: linear-gradient(45deg, #ff0000, #ff8800, #ffff00, #00ff00, #0088ff, #0000ff); /* Rainbow gradient */
+    background: linear-gradient(45deg, #ff0000, #ff8800, #ffff00, #00ff00, #0088ff, #0000ff); 
     padding: 20px;
-    border-radius: 10px; /* Optional for rounded corners */
+    border-radius: 10px; 
 }
 
 #coding-languages {
