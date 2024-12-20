@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Freefall Simulator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+            font-family: Arial;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .simulator {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        canvas {
+            background: black;
+            border: 2px solid #333;
+            border-radius: 4px;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        button {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #555;
+        }
+        button.active {
+            background: #4CAF50;
+        }
+        .info {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            font-size: 14px;
+        }
+        .info-item {
+            background: #333;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="simulator">
+        <canvas id="canvas" width="600" height="400"></canvas>
+        <div class="controls">
+            <button id="parachuteBtn">Deploy Parachute</button>
+            <button id="resetBtn">Reset</button>
+            <button id="massIncBtn">Increase Mass</button>
+            <button id="massDecBtn">Decrease Mass</button>
+        </div>
+        <div class="info">
+            <div class="info-item" id="heightInfo">Height: 0.0 m</div>
+            <div class="info-item" id="velocityInfo">Velocity: 0.0 m/s</div>
+            <div class="info-item" id="massInfo">Mass: 80.0 kg</div>
+            <div class="info-item" id="parachuteInfo">Parachute: CLOSED</div>
+        </div>
+    </div>
+
+    <script>
+        const SCREEN_WIDTH = 600;
+        const SCREEN_HEIGHT = 400;
+        const GRAVITY = 9.81;
+        const AIR_DENSITY = 1.225;
+
+        const WHITE = '#FFFFFF';
+        const BLACK = '#000000';
+        const RED = '#FF0000';
+        const BLUE = '#0000FF';
+        const GREEN = '#00FF00';
+
+        class FreefallSimulator {
+            constructor() {
+                this.reset_simulation();
+            }
+
+            reset_simulation() {
+                this.mass = 80.0;
+                this.position = 0;
+                this.velocity = 0;
+                this.parachute_deployed = false;
+                this.drag_coefficient = 0.5;
+                this.cross_section = 0.5;
+            }
+
+            calculate_forces() {
+                const weight = this.mass * GRAVITY;
+                
+                if (this.parachute_deployed) {
+                    this.drag_coefficient = 1.75;
+                    this.cross_section = 40.0;
+                } else {
+                    this.drag_coefficient = 0.5;
+                    this.cross_section = 0.5;
+                }
+                
+                const drag = 0.5 * AIR_DENSITY * this.drag_coefficient * this.cross_section * this.velocity * this.velocity;
+                
+                return { weight, drag };
+            }
+
+            update_physics(dt) {
+                const { weight, drag } = this.calculate_forces();
+                const net_force = this.velocity > 0 ? weight - drag : weight;
+                
+                this.velocity += (net_force / this.mass) * dt;
+                this.position += this.velocity * dt;
+                
+                if (this.position >= SCREEN_HEIGHT * 0.8) {
+                    this.position = SCREEN_HEIGHT * 0.8;
+                    this.velocity = 0;
+                }
+
+                return { weight, drag };
+            }
+
+            toggle_parachute() {
+                this.parachute_deployed = !this.parachute_deployed;
+                document.getElementById('parachuteBtn').textContent = 
+                    this.parachute_deployed ? 'Retract Parachute' : 'Deploy Parachute';
+                document.getElementById('parachuteBtn').classList.toggle('active', this.parachute_deployed);
+            }
+
+            adjust_mass(delta) {
+                this.mass = Math.max(50, this.mass + delta);
+            }
+        }
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const simulator = new FreefallSimulator();
+        let lastTime = performance.now();
+
+        function drawArrow(ctx, x, y, force, color, direction = 1) {
+            const scale = 0.1;
+            const length = force * scale * direction;
+            const headSize = 8;
+            
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            
+            // Draw line
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x, y + length);
+            ctx.stroke();
+            
+            // Draw arrowhead
+            ctx.beginPath();
+            ctx.moveTo(x - headSize/2, y + length - headSize * Math.sign(length));
+            ctx.lineTo(x + headSize/2, y + length - headSize * Math.sign(length));
+            ctx.lineTo(x, y + length);
+            ctx.fill();
+            
+            // Draw force value
+            ctx.fillText(`${Math.abs(force).toFixed(0)}N`, x + 10, y + length/2);
+        }
+
+        function updateInfo(height, velocity, mass, parachute) {
+            document.getElementById('heightInfo').textContent = 
+                `Height: ${height.toFixed(1)} m`;
+            document.getElementById('velocityInfo').textContent = 
+                `Velocity: ${Math.abs(velocity).toFixed(1)} m/s`;
+            document.getElementById('massInfo').textContent = 
+                `Mass: ${mass.toFixed(1)} kg`;
+            document.getElementById('parachuteInfo').textContent = 
+                `Parachute: ${parachute ? 'OPEN' : 'CLOSED'}`;
+        }
+
+        function draw() {
+            ctx.fillStyle = BLACK;
+            ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+            
+            const groundY = SCREEN_HEIGHT * 0.8;
+            ctx.strokeStyle = GREEN;
+            ctx.beginPath();
+            ctx.moveTo(0, groundY);
+            ctx.lineTo(SCREEN_WIDTH, groundY);
+            ctx.stroke();
+            
+            const centerX = SCREEN_WIDTH/2;
+            ctx.strokeStyle = WHITE;
+            ctx.fillStyle = WHITE;
+            
+            // Draw jumper
+            if (simulator.parachute_deployed) {
+                ctx.beginPath();
+                ctx.arc(centerX, simulator.position - 40, 40, 0, Math.PI, true);
+                ctx.stroke();
+            }
+            ctx.beginPath();
+            ctx.arc(centerX, simulator.position, 10, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Calculate and draw forces
+            const { weight, drag } = simulator.calculate_forces();
+            
+            // Draw force arrows on the jumper
+            drawArrow(ctx, centerX - 20, simulator.position, weight, RED, 1);  // Weight down
+            if (simulator.velocity > 0) {
+                drawArrow(ctx, centerX + 20, simulator.position, drag, BLUE, -1);  // Drag up
+            }
+            
+            // Update info panel
+            updateInfo(
+                (groundY - simulator.position)/10,
+                simulator.velocity,
+                simulator.mass,
+                simulator.parachute_deployed
+            );
+        }
+
+        function animate() {
+            const currentTime = performance.now();
+            const dt = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            
+            simulator.update_physics(dt);
+            draw();
+            requestAnimationFrame(animate);
+        }
+
+        // Button controls
+        document.getElementById('parachuteBtn').addEventListener('click', () => {
+            simulator.toggle_parachute();
+        });
+        
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            simulator.reset_simulation();
+        });
+        
+        document.getElementById('massIncBtn').addEventListener('click', () => {
+            simulator.adjust_mass(10);
+        });
+        
+        document.getElementById('massDecBtn').addEventListener('click', () => {
+            simulator.adjust_mass(-10);
+        });
+
+        animate();
+    </script>
+</body>
+</html>

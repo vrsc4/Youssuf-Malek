@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculus Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .calculator-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 20px;
+            width: 500px;
+        }
+        .operation-section {
+            margin-bottom: 20px;
+        }
+        input, select, button {
+            margin: 5px;
+            padding: 5px;
+        }
+        #result-display {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator-container">
+        <h1>Calculus Calculator</h1>
+        
+        <div class="operation-section">
+            <h3>Derivative Calculator</h3>
+            <input type="text" id="derivative-input" placeholder="Enter function (e.g., x^2)">
+            <input type="text" id="derivative-var" placeholder="Variable (default: x)" value="x">
+            <button id="derivative-btn">Calculate Derivative</button>
+        </div>
+
+        <div class="operation-section">
+            <h3>Integral Calculator</h3>
+            <input type="text" id="integral-input" placeholder="Enter function (e.g., x^2)">
+            <input type="text" id="integral-var" placeholder="Variable (default: x)" value="x">
+            <label>Lower Bound: <input type="number" id="integral-lower" value="0"></label>
+            <label>Upper Bound: <input type="number" id="integral-upper" value="1"></label>
+            <button id="integral-btn">Calculate Integral</button>
+        </div>
+
+        <div id="result-display">Results will appear here</div>
+    </div>
+
+    <script>
+        const resultDisplay = document.getElementById('result-display');
+
+        function calculateDerivative() {
+            const func = document.getElementById('derivative-input').value;
+            const variable = document.getElementById('derivative-var').value;
+
+            try {
+                const derivative = math.derivative(func, variable);
+                resultDisplay.innerHTML = `
+                    <strong>Derivative of ${func} with respect to ${variable}:</strong><br>
+                    ${derivative.toString()}
+                `;
+            } catch (error) {
+                resultDisplay.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        function calculateIntegral() {
+            const func = document.getElementById('integral-input').value;
+            const variable = document.getElementById('integral-var').value;
+            const lowerBound = parseFloat(document.getElementById('integral-lower').value);
+            const upperBound = parseFloat(document.getElementById('integral-upper').value);
+
+            try {
+                // Basic integration rules
+                function getIndefiniteIntegral(f) {
+                    // Remove whitespace and convert to lowercase
+                    f = f.replace(/\s+/g, '').toLowerCase();
+
+                    // Integration rules
+                    const rules = [
+                        { pattern: /^x\^(\d+)$/, 
+                          integrate: (power) => `(x^${parseInt(power)+1})/${parseInt(power)+1}` },
+                        { pattern: /^x$/, 
+                          integrate: () => '(x^2)/2' },
+                        { pattern: /^(\d+)$/, 
+                          integrate: (coeff) => `${coeff}x` },
+                        { pattern: /^(\d+)x$/, 
+                          integrate: (coeff) => `(${coeff}x^2)/2` },
+                        { pattern: /^(\d+)x\^(\d+)$/, 
+                          integrate: (coeff, power) => `(${coeff}x^${parseInt(power)+1})/${parseInt(power)+1}` }
+                    ];
+
+                    // Try each integration rule
+                    for (let rule of rules) {
+                        const match = f.match(rule.pattern);
+                        if (match) {
+                            const params = match.slice(1);
+                            return rule.integrate(...params) + ' + C';
+                        }
+                    }
+
+                    // If no rule matches
+                    return 'Unable to compute indefinite integral';
+                }
+
+                // Numerical integration using trapezoidal rule
+                const numSteps = 1000;
+                const step = (upperBound - lowerBound) / numSteps;
+                let definiteIntegral = 0;
+
+                for (let i = 0; i < numSteps; i++) {
+                    const x1 = lowerBound + i * step;
+                    const x2 = x1 + step;
+                    const y1 = math.evaluate(func, {x: x1});
+                    const y2 = math.evaluate(func, {x: x2});
+                    definiteIntegral += (y1 + y2) * step / 2;
+                }
+
+                const indefiniteIntegral = getIndefiniteIntegral(func);
+
+                resultDisplay.innerHTML = `
+                    <strong>Indefinite Integral of ${func}:</strong><br>
+                    ${indefiniteIntegral}<br><br>
+                    <strong>Definite Integral from ${lowerBound} to ${upperBound}:</strong><br>
+                    ${definiteIntegral.toFixed(4)}
+                `;
+            } catch (error) {
+                resultDisplay.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        document.getElementById('derivative-btn').addEventListener('click', calculateDerivative);
+        document.getElementById('integral-btn').addEventListener('click', calculateIntegral);
+    </script>
+</body>
+</html>

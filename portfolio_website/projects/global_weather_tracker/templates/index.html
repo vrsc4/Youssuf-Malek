@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Global Weather Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+        #weather-form {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #prediction {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e7f3fe;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="weather-form">
+        <h1>Global Weather Tracker</h1>
+        <form id="city-form">
+            <input type="text" id="city-input" placeholder="Enter a city name" required>
+            <button type="submit">Get Weather</button>
+        </form>
+        <div id="prediction"></div>
+    </div>
+
+    <script>
+        document.getElementById('city-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const city = document.getElementById('city-input').value;
+            const predictionDiv = document.getElementById('prediction');
+            
+            predictionDiv.innerHTML = 'Fetching weather data...';
+
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `city=${encodeURIComponent(city)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    predictionDiv.innerHTML = `Error: ${data.error}`;
+                } else {
+                    predictionDiv.innerHTML = `
+                        <h2>Weather in ${data.city}</h2>
+                        <p>${data.prediction}</p>
+                        <p>Temperature: ${data.temp}°C</p>
+                        <p>Conditions: ${data.description}</p>
+                    `;
+                }
+            })
+            .catch(error => {
+                predictionDiv.innerHTML = `Error: ${error}`;
+            });
+        });
+    </script>
+</body>
+</html>

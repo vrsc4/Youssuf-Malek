@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Portfolio - Youssuf Malek</title>
+    <link rel="stylesheet" href="styles/styles.css">
+    <style>
+        .rainbow-star {
+            width: 100px;
+            height: 100px;
+            margin: 20px auto;
+            display: block;
+        }
+        
+        .hero-content {
+            text-align: center;
+        }
+
+        .hero-content h1 {
+            margin-bottom: 10px;
+        }
+
+        @keyframes rainbow {
+            0% { stop-color: #ff0000; }
+            16.666% { stop-color: #ff8800; }
+            33.333% { stop-color: #ffff00; }
+            50% { stop-color: #00ff00; }
+            66.666% { stop-color: #0088ff; }
+            83.333% { stop-color: #0000ff; }
+            100% { stop-color: #ff0000; }
+        }
+
+        .skills {
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .skill-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .skill-tag {
+            background: #4facfe;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .skill-icons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .skill-icon {
+            text-align: center;
+            width: 80px;
+            margin: 0 10px;
+        }
+
+        .skill-icon a {
+            display: block;
+            width: 80px;
+            height: 80px;
+            background-color: #4a90e2;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .skill-icon a:hover {
+            background-color: #357abd;
+        }
+
+        .skill-icon img {
+            width: 60%;
+            height: 60%;
+            object-fit: contain;
+        }
+
+        .skill-icon span {
+            display: block;
+            font-size: 0.8rem;
+            color: #cccccc;
+        }
+        
+        .rainbow-cube-container {
+            display: flex;
+            justify-content: center;
+            perspective: 1000px;
+            margin: 13rem 0 1rem 0;
+        }
+
+        .rainbow-cube {
+            width: 100px;
+            height: 100px;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotateCube 10s linear infinite;
+        }
+
+        @keyframes rotateCube {
+            0% { transform: rotateX(0deg) rotateY(0deg); }
+            100% { transform: rotateX(360deg) rotateY(360deg); }
+        }
+
+        .rainbow-cube-face {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            opacity: 0.8;
+            background: linear-gradient(45deg, 
+                #FF0000, #FF7F00, #FFFF00, 
+                #00FF00, #0000FF, #4B0082, #9400D3);
+            background-size: 400% 400%;
+            animation: gradientShift 5s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .front  { transform: translateZ(50px); }
+        .back   { transform: rotateY(180deg) translateZ(50px); }
+        .right  { transform: rotateY(90deg) translateZ(50px); }
+        .left   { transform: rotateY(-90deg) translateZ(50px); }
+        .top    { transform: rotateX(90deg) translateZ(50px); }
+        .bottom { transform: rotateX(-90deg) translateZ(50px); }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-content">
+            <div class="logo">
+                <a href="index.html">Portfolio</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="projects/projects.html">Projects</a></li>
+                <li><a href="projects/certificates.html">Certificates</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1>Hi, I'm Youssuf Malek</h1>
+            <svg class="rainbow-star" viewBox="0 0 100 100">
+                <defs>
+                    <linearGradient id="rainbow" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#ff0000; animation: rainbow 4s linear infinite;">
+                            <animate attributeName="stop-color" values="#ff0000; #ff8800; #ffff00; #00ff00; #0088ff; #0000ff; #ff0000" dur="4s" repeatCount="indefinite"/>
+                        </stop>
+                        <stop offset="100%" style="stop-color:#ff8800;">
+                            <animate attributeName="stop-color" values="#ff8800; #ffff00; #00ff00; #0088ff; #0000ff; #ff0000; #ff8800" dur="4s" repeatCount="indefinite"/>
+                        </stop>
+                    </linearGradient>
+                </defs>
+                <path fill="url(#rainbow)" d="M50 5 L61 40 L98 40 L68 62 L79 95 L50 75 L21 95 L32 62 L2 40 L39 40 Z">
+                    <animateTransform 
+                        attributeName="transform"
+                        type="rotate"
+                        from="0 50 50"
+                        to="360 50 50"
+                        dur="20s"
+                        repeatCount="indefinite"/>
+                </path>
+            </svg>
+            <div class="rainbow-cube-container">
+                <div class="rainbow-cube">
+                    <div class="rainbow-cube-face front"></div>
+                    <div class="rainbow-cube-face back"></div>
+                    <div class="rainbow-cube-face right"></div>
+                    <div class="rainbow-cube-face left"></div>
+                    <div class="rainbow-cube-face top"></div>
+                    <div class="rainbow-cube-face bottom"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="about">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 offset-lg-2 text-center">
+                    <h2 class="section-title">About Me</h2>
+                    <div class="about-text">
+                        I am an aspiring Full Stack Developer with 4 years of experience in web development and coding. What began with coding a game in ROBLOX has now led me to pursue a Bachelor's degree in Computer Engineering. I am grateful for every moment of growth along the way. Moving forward, I aim to apply the concepts I learn in real-world projects and further expand my knowledge in areas like artificial intelligence.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="contact">
+        <h2>Contact Me</h2>
+        <div class="contact-content">
+            <p>Feel free to reach out to me at: <a href="mailto:vrsc4xm1lqq@gmail.com">vrsc4xm1lqq@gmail.com</a></p>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 Youssuf Malek</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Parachute Free Fall Simulator</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        .simulator-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 95vw;
+            max-width: 900px;
+            max-height: 95vh;
+            overflow: hidden;
+        }
+        h1 {
+            margin: 10px 0;
+            font-size: 1.5em;
+        }
+        #simulation-canvas {
+            border: 2px solid #333;
+            background-color: #87CEEB;
+            width: 100%;
+            max-height: 50vh;
+            aspect-ratio: 3/2;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .info-display {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin: 5px 0;
+        }
+        .info-box {
+            background-color: #f0f0f0;
+            padding: 5px;
+            border-radius: 5px;
+            text-align: center;
+            min-width: 80px;
+            font-size: 0.9em;
+        }
+        .force-display {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin: 5px 0;
+        }
+        .force-box {
+            background-color: #f0f0f0;
+            padding: 5px;
+            border-radius: 5px;
+            text-align: center;
+            min-width: 80px;
+            font-size: 0.9em;
+        }
+        @media (max-width: 600px) {
+            .controls, .info-display, .force-display {
+                flex-direction: column;
+                align-items: center;
+            }
+            .info-box, .force-box {
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="simulator-container">
+        <h1>Parachute Free Fall Simulator</h1>
+        <canvas id="simulation-canvas"></canvas>
+        
+        <div class="controls">
+            <label>Mass (kg): 
+                <input type="number" id="mass-input" value="80" min="1" max="200" step="1">
+            </label>
+            <button id="start-btn">Start Simulation</button>
+            <button id="deploy-parachute-btn" disabled>Deploy Parachute</button>
+            <button id="reset-btn">Reset</button>
+        </div>
+
+        <div class="info-display">
+            <div class="info-box">
+                <h3>Height</h3>
+                <p id="height-value">300 m</p>
+            </div>
+            <div class="info-box">
+                <h3>Velocity</h3>
+                <p id="velocity-value">0 m/s</p>
+            </div>
+            <div class="info-box">
+                <h3>Time</h3>
+                <p id="time-value">0 s</p>
+            </div>
+        </div>
+        <div class="force-display">
+            <div class="force-box">
+                <h3>Gravitational Force</h3>
+                <p id="gravitational-force-value">0 N</p>
+            </div>
+            <div class="force-box">
+                <h3>Drag Force</h3>
+                <p id="drag-force-value">0 N</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class FreefallSimulation {
+            constructor(mass) {
+                // Initial conditions
+                this.mass = mass;
+                this.height = 300; // Starting height 300m
+                this.velocity = 0;
+                this.time = 0;
+                
+                // Physics constants
+                this.gravity = 9.8;
+                this.airDensity = 1.225;
+                
+                // Parachute states
+                this.parachuteDeployed = false;
+                this.parachuteDragCoefficient = 1.5;
+                this.parachuteArea = 10; // m²
+            }
+
+            calculateDragForce() {
+                // Drag force calculation
+                const dragCoefficient = this.parachuteDeployed ? 
+                    this.parachuteDragCoefficient : 0.47; // Sphere drag coefficient
+                const crossSectionalArea = this.parachuteDeployed ? 
+                    this.parachuteArea : 0.1; // Body cross-sectional area
+                
+                return 0.5 * this.airDensity * 
+                       (this.velocity ** 2) * 
+                       dragCoefficient * 
+                       crossSectionalArea;
+            }
+
+            update(deltaTime) {
+                // Gravitational force
+                const gravitationalForce = this.mass * this.gravity;
+                
+                // Drag force (opposite to velocity)
+                const dragForce = this.calculateDragForce();
+                const dragDirection = this.velocity >= 0 ? 1 : -1;
+                
+                // Net force calculation
+                const netForce = gravitationalForce - (dragForce * dragDirection);
+                
+                // Acceleration
+                const acceleration = netForce / this.mass;
+                
+                // Update velocity and height
+                this.velocity += acceleration * deltaTime;
+                this.height -= this.velocity * deltaTime;
+                
+                // Prevent going below ground
+                if (this.height < 0) {
+                    this.height = 0;
+                    this.velocity = 0;
+                }
+                
+                // Update time
+                this.time += deltaTime;
+                
+                return {
+                    height: this.height,
+                    velocity: this.velocity,
+                    acceleration: acceleration,
+                    time: this.time,
+                    gravitationalForce: gravitationalForce,
+                    dragForce: dragForce
+                };
+            }
+
+            deployParachute() {
+                this.parachuteDeployed = true;
+            }
+        }
+
+        // Canvas and DOM element setup
+        const canvas = document.getElementById('simulation-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Control elements
+        const massInput = document.getElementById('mass-input');
+        const startBtn = document.getElementById('start-btn');
+        const deployParachuteBtn = document.getElementById('deploy-parachute-btn');
+        const resetBtn = document.getElementById('reset-btn');
+
+        // Display elements
+        const heightDisplay = document.getElementById('height-value');
+        const velocityDisplay = document.getElementById('velocity-value');
+        const timeDisplay = document.getElementById('time-value');
+        const gravitationalForceDisplay = document.getElementById('gravitational-force-value');
+        const dragForceDisplay = document.getElementById('drag-force-value');
+
+        let simulation = null;
+        let animationFrame = null;
+
+        function drawBuilding(ctx) {
+            // Draw tall building
+            ctx.fillStyle = 'gray';
+            ctx.fillRect(50, 0, 100, canvas.height - 50);
+        }
+
+        function drawGround(ctx) {
+            // Draw ground
+            ctx.fillStyle = 'brown';
+            ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+        }
+
+        function drawFallingObject(ctx, height, parachuteDeployed, gravitationalForce, dragForce) {
+            const objectY = canvas.height - 50 - (height / 300 * (canvas.height - 50));
+            const centerX = 100; // Aligned with building
+            const objectRadius = 20;
+
+            // Draw parachute if deployed
+            if (parachuteDeployed) {
+                ctx.beginPath();
+                ctx.moveTo(centerX - 50, objectY - 50);
+                ctx.lineTo(centerX + 50, objectY - 50);
+                ctx.lineTo(centerX, objectY);
+                ctx.fillStyle = 'rgba(255,0,0,0.5)';
+                ctx.fill();
+            }
+
+            // Draw falling object
+            ctx.beginPath();
+            ctx.arc(centerX, objectY, objectRadius, 0, Math.PI * 2);
+            ctx.fillStyle = parachuteDeployed ? 'red' : 'blue';
+            ctx.fill();
+
+            // Draw force arrows
+            const maxArrowLength = 50;
+            const arrowBaseX = centerX + objectRadius + 10;
+
+            // Gravitational Force Arrow (always pointing down)
+            ctx.beginPath();
+            ctx.moveTo(arrowBaseX, objectY);
+            const gravArrowLength = Math.min(gravitationalForce / 10, maxArrowLength);
+            ctx.lineTo(arrowBaseX, objectY + gravArrowLength);
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Drag Force Arrow (opposite to movement)
+            ctx.beginPath();
+            ctx.moveTo(arrowBaseX, objectY);
+            const dragArrowLength = Math.min(dragForce / 10, maxArrowLength);
+            ctx.lineTo(arrowBaseX, objectY - dragArrowLength);
+            ctx.strokeStyle = 'green';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        function startSimulation() {
+            const mass = parseFloat(massInput.value);
+            simulation = new FreefallSimulation(mass);
+            deployParachuteBtn.disabled = false;
+            startBtn.disabled = true;
+            
+            let lastTime = null;
+            function animate(currentTime) {
+                if (lastTime === null) lastTime = currentTime;
+                const deltaTime = (currentTime - lastTime) / 1000; // Convert to seconds
+                lastTime = currentTime;
+
+                const state = simulation.update(deltaTime);
+
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Draw scene elements
+                drawBuilding(ctx);
+                drawGround(ctx);
+                drawFallingObject(ctx, state.height, simulation.parachuteDeployed, state.gravitationalForce, state.dragForce);
+
+                // Update displays
+                heightDisplay.textContent = `${state.height.toFixed(2)} m`;
+                velocityDisplay.textContent = `${Math.abs(state.velocity).toFixed(2)} m/s`;
+                timeDisplay.textContent = `${state.time.toFixed(2)} s`;
+                gravitationalForceDisplay.textContent = `${state.gravitationalForce.toFixed(2)} N`;
+                dragForceDisplay.textContent = `${state.dragForce.toFixed(2)} N`;
+
+                // Stop if object hits ground
+                if (state.height <= 0) {
+                    cancelAnimationFrame(animationFrame);
+                    startBtn.disabled = false;
+                    return;
+                }
+
+                animationFrame = requestAnimationFrame(animate);
+            }
+
+            animationFrame = requestAnimationFrame(animate);
+        }
+
+        function resetSimulation() {
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBuilding(ctx);
+            drawGround(ctx);
+            
+            simulation = null;
+            startBtn.disabled = false;
+            deployParachuteBtn.disabled = true;
+            
+            // Reset displays
+            heightDisplay.textContent = '300 m';
+            velocityDisplay.textContent = '0 m/s';
+            timeDisplay.textContent = '0 s';
+            gravitationalForceDisplay.textContent = '0 N';
+            dragForceDisplay.textContent = '0 N';
+        }
+
+        function deployParachute() {
+            if (simulation) {
+                simulation.deployParachute();
+                deployParachuteBtn.disabled = true;
+            }
+        }
+
+        // Event listeners
+        startBtn.addEventListener('click', startSimulation);
+        resetBtn.addEventListener('click', resetSimulation);
+        deployParachuteBtn.addEventListener('click', deployParachute);
+
+        // Initial scene setup
+        drawBuilding(ctx);
+        drawGround(ctx);
+    </script>
+</body>
+</html>
