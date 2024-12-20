@@ -311,8 +311,32 @@ footer {
     gap: 2rem;
     justify-content: center;
     margin-top: 2rem;
-    background: linear-gradient(45deg, #ff0000, #ff8800, #ffff00, #00ff00, #0088ff, #0000ff); 
+    background: linear-gradient(45deg, #ff0000, #ff8800, #ffff00, #00ff00, #0088ff, #0000ff); /* Rainbow gradient */
     padding: 20px;
-    border-radius: 10px; 
+    border-radius: 10px; /* Optional for rounded corners */
 }
 
+#coding-languages {
+    text-align: center;
+    margin: 3rem 0;
+}
+
+#coding-languages h2 {
+    margin-bottom: 2rem;
+    color: #4facfe;
+}
+
+.language-logos {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+}
+
+.language-logos a {
+    transition: transform 0.3s ease;
+}
+
+.language-logos a:hover {
+    transform: scale(1.1);
+}
